@@ -33,31 +33,31 @@ export default function Home() {
             {/* Pickup location input */}
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
               <img
-                src="/icons/pickup.png"
+                src="/pickuplogo.png"
                 alt="Pickup Icon"
                 className="w-5 h-5 text-gray-900"
               />
               <input
                 type="text"
                 placeholder="Pickup location"
-                className="ml-3 w-full focus:outline-none"
+                className="text-gray-600 ml-3 w-full focus:outline-none"
               />
             </div>
 
             {/* Dropoff location input with add-stop icon */}
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
               <img
-                src="/icons/dropoff.png"
+                src="/dropoff.png"
                 alt="Dropoff Icon"
-                className="w-5 h-5 text-gray-500"
+                className="w-5 h-5 text-gray-600"
               />
               <input
                 type="text"
                 placeholder="Dropoff location"
-                className="ml-3 w-full focus:outline-none"
+                className="text-gray-600 ml-3 w-full focus:outline-none"
               />
               <img
-                src="/icons/plus.png"
+                src="/more.png"
                 alt="Add Stop"
                 className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
               />
@@ -66,11 +66,11 @@ export default function Home() {
             {/* Schedule picker */}
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
               <img
-                src="/icons/clock.png"
+                src="/agenda.png"
                 alt="Schedule Icon"
                 className="w-5 h-5 text-gray-500"
               />
-              <select className="ml-3 w-full bg-transparent focus:outline-none">
+              <select className="text-gray-600 ml-3 w-full bg-transparent focus:outline-none">
                 <option>Pickup now</option>
                 {/* Aquí puedes añadir más opciones de horario */}
               </select>
