@@ -1,33 +1,94 @@
-import AcmeLogo from '@/app/ui/acme-logo';
-import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
-
-export default function Page() {
+export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col p-6">
-      <div className="flex h-20 shrink-0 items-end rounded-lg bg-blue-500 p-4 md:h-52">
-        {/* <AcmeLogo /> */}
-      </div>
-      <div className="mt-4 flex grow flex-col gap-4 md:flex-row">
-        <div className="flex flex-col justify-center gap-6 rounded-lg bg-gray-50 px-6 py-10 md:w-2/5 md:px-20">
-          <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
-            <strong>Welcome to Acme.</strong> This is the example for the{' '}
-            <a href="https://nextjs.org/learn/" className="text-blue-500">
-              Next.js Learn Course
-            </a>
-            , brought to you by Vercel.
-          </p>
-          <Link
-            href="/login"
-            className="flex items-center gap-5 self-start rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-400 md:text-base"
+    <div className="flex flex-col h-screen">
+      {/* Navbar */}
+      <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+        <div className="flex items-center">
+          <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
+          <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
+        </div>
+        <nav>
+          <a
+            href="/reports"
+            className="text-white-700 hover:text-gray-900 font-medium"
           >
-            <span>Log in</span> <ArrowRightIcon className="w-5 md:w-6" />
-          </Link>
+            Reportes
+          </a>
+        </nav>
+        <div className="w-8 h-8 rounded-full overflow-hidden">
+          <img
+            src="/userloo.png"
+            alt="Perfil"
+            className="w-full h-full object-cover"
+          />
         </div>
-        <div className="flex items-center justify-center p-6 md:w-3/5 md:px-28 md:py-12">
-          {/* Add Hero Images Here */}
-        </div>
-      </div>
-    </main>
+      </header>
+
+      {/* Main content: form + map placeholder */}
+      <main className="flex flex-1 overflow-hidden">
+        {/* Ride request panel */}
+        <aside className="w-full max-w-sm bg-white m-6 p-4 rounded-lg shadow-lg">
+          <h2 className="text-black text-xl font-semibold mb-4">Get a ride</h2>
+          <form className="space-y-4">
+            {/* Pickup location input */}
+            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+              <img
+                src="/icons/pickup.png"
+                alt="Pickup Icon"
+                className="w-5 h-5 text-gray-900"
+              />
+              <input
+                type="text"
+                placeholder="Pickup location"
+                className="ml-3 w-full focus:outline-none"
+              />
+            </div>
+
+            {/* Dropoff location input with add-stop icon */}
+            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+              <img
+                src="/icons/dropoff.png"
+                alt="Dropoff Icon"
+                className="w-5 h-5 text-gray-500"
+              />
+              <input
+                type="text"
+                placeholder="Dropoff location"
+                className="ml-3 w-full focus:outline-none"
+              />
+              <img
+                src="/icons/plus.png"
+                alt="Add Stop"
+                className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
+              />
+            </div>
+
+            {/* Schedule picker */}
+            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+              <img
+                src="/icons/clock.png"
+                alt="Schedule Icon"
+                className="w-5 h-5 text-gray-500"
+              />
+              <select className="ml-3 w-full bg-transparent focus:outline-none">
+                <option>Pickup now</option>
+                {/* Aquí puedes añadir más opciones de horario */}
+              </select>
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="w-full bg-yellow-500 text-white py-2 rounded-lg font-semibold hover:bg-yellow-600 transition"
+            >
+              Pedir Viaje
+            </button>
+          </form>
+        </aside>
+
+        {/* Map placeholder */}
+        <div className="flex-1 m-6 bg-gray-100 rounded-lg" />
+      </main>
+    </div>
   );
 }
