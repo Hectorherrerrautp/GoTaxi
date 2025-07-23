@@ -2,15 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ejemplo de personalización */
-.bg-yellow-500 {
-  background-color: #FFC107; /* Color amarillo */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
-.text-yellow-500 {
-  color: #FFC107; /* Color amarillo para el texto */
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.shadow-lg {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
