@@ -1,0 +1,30 @@
+/* styles/style.css */
+
+.page {
+  display: flex;
+  height: 100vh;
+  margin: 0;
+}
+
+.sidebar {
+  width: 300px;
+  padding: 1.5rem;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+}
+
+.logo {
+  font-size: 2rem;
+  color: #FFC107;
+  margin-bottom: 1rem;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+#map, .map-container > .mapboxgl-canvas {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; right: 0;
+}
