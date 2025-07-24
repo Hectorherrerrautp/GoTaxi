@@ -1,3 +1,8 @@
+// app/page.tsx
+'use client';
+
+import Map from '@/components/Map';
+
 export default function Home() {
   return (
     <div className="flex flex-col h-screen">
@@ -24,7 +29,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main content: form + map placeholder */}
+      {/* Main content: form + map */}
       <main className="flex flex-1 overflow-hidden">
         {/* Ride request panel */}
         <aside className="w-full max-w-sm bg-white m-6 p-4 rounded-lg shadow-lg">
@@ -44,7 +49,7 @@ export default function Home() {
               />
             </div>
 
-            {/* Dropoff location input with add-stop icon */}
+            {/* Dropoff location input */}
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
               <img
                 src="/dropoff.png"
@@ -72,7 +77,7 @@ export default function Home() {
               />
               <select className="text-gray-600 ml-3 w-full bg-transparent focus:outline-none">
                 <option>Pickup now</option>
-                {/* Aquí puedes añadir más opciones de horario */}
+                {/* Más opciones */}
               </select>
             </div>
 
@@ -86,9 +91,12 @@ export default function Home() {
           </form>
         </aside>
 
-        {/* Map placeholder */}
-        <div className="flex-1 m-6 bg-gray-100 rounded-lg" />
+        {/* Aquí insertamos el mapa */}
+        <div className="flex-1 m-6 rounded-lg overflow-hidden">
+          <Map />
+        </div>
       </main>
     </div>
   );
 }
+
