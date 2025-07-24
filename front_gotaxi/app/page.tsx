@@ -1,102 +1,76 @@
-// app/page.tsx
 'use client';
 
-import Map from '@/components/Map';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    router.push('/home');
+  };
+
   return (
-    <div className="flex flex-col h-screen">
-      {/* Navbar */}
-      <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
-        <div className="flex items-center">
-          <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
-          <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
-        </div>
-        <nav>
-          <a
-            href="/reports"
-            className="text-white-700 hover:text-gray-900 font-medium"
-          >
-            Reportes
-          </a>
-        </nav>
-        <div className="w-8 h-8 rounded-full overflow-hidden">
+    <div className="flex justify-center items-center h-screen bg-black">
+      <div className="w-full max-w-md p-6 bg-black shadow-lg rounded-lg">
+        {/* Logo GoTaxi */}
+        <div className="flex justify-center mb-4">
           <img
-            src="/userloo.png"
-            alt="Perfil"
-            className="w-full h-full object-cover"
+            src="/logotaxi.png"
+            alt="GoTaxi Logo"
+            className="w-50 h-50"
           />
         </div>
-      </header>
 
-      {/* Main content: form + map */}
-      <main className="flex flex-1 overflow-hidden">
-        {/* Ride request panel */}
-        <aside className="w-full max-w-sm bg-white m-6 p-4 rounded-lg shadow-lg">
-          <h2 className="text-black text-xl font-semibold mb-4">Get a ride</h2>
-          <form className="space-y-4">
-            {/* Pickup location input */}
-            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-              <img
-                src="/pickuplogo.png"
-                alt="Pickup Icon"
-                className="w-5 h-5 text-gray-900"
-              />
-              <input
-                type="text"
-                placeholder="Pickup location"
-                className="text-gray-600 ml-3 w-full focus:outline-none"
-              />
-            </div>
+        <h2 className="text-white text-2xl font-bold mb-4 text-center">
+          Inicio de sesión
+        </h2>
 
-            {/* Dropoff location input */}
-            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-              <img
-                src="/dropoff.png"
-                alt="Dropoff Icon"
-                className="w-5 h-5 text-gray-600"
-              />
-              <input
-                type="text"
-                placeholder="Dropoff location"
-                className="text-gray-600 ml-3 w-full focus:outline-none"
-              />
-              <img
-                src="/more.png"
-                alt="Add Stop"
-                className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
-              />
-            </div>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-            {/* Schedule picker */}
-            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-              <img
-                src="/agenda.png"
-                alt="Schedule Icon"
-                className="w-5 h-5 text-gray-500"
-              />
-              <select className="text-gray-600 ml-3 w-full bg-transparent focus:outline-none">
-                <option>Pickup now</option>
-                {/* Más opciones */}
-              </select>
-            </div>
+        <form onSubmit={handleLogin}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-white">
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              placeholder="Correo electrónico"
+            />
+          </div>
 
-            {/* Submit button */}
-            <button
-              type="submit"
-              className="w-full bg-yellow-500 text-white py-2 rounded-lg font-semibold hover:bg-yellow-600 transition"
-            >
-              Pedir Viaje
-            </button>
-          </form>
-        </aside>
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-white">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              placeholder="Contraseña"
+            />
+          </div>
 
-        {/* Aquí insertamos el mapa */}
-        <div className="flex-1 m-6 rounded-lg overflow-hidden">
-          <Map />
-        </div>
-      </main>
+          <button
+            type="submit"
+            className="w-full bg-yellow-500 text-white py-2 rounded-lg font-semibold hover:bg-yellow-600 transition"
+          >
+            Iniciar sesión
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
