@@ -1,0 +1,30 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-frontgotaxi-dev-e3ab8-authRole",
+      "UnauthRoleArn": "arn:aws:iam::853219709180:role/amplify-frontgotaxi-dev-e3ab8-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::853219709180:role/amplify-frontgotaxi-dev-e3ab8-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-frontgotaxi-dev-e3ab8-deployment",
+      "UnauthRoleName": "amplify-frontgotaxi-dev-e3ab8-unauthRole",
+      "StackName": "amplify-frontgotaxi-dev-e3ab8",
+      "StackId": "arn:aws:cloudformation:us-east-1:853219709180:stack/amplify-frontgotaxi-dev-e3ab8/7d222320-68f9-11f0-8e25-0affe31d6205",
+      "AmplifyAppId": "d2vqyszxgdklzi"
+    },
+    "categories": {
+      "function": {
+        "SolicitarViaje": {
+          "deploymentBucketName": "amplify-frontgotaxi-dev-e3ab8-deployment",
+          "s3Key": "amplify-builds/SolicitarViaje-76415842436c54583055-build.zip"
+        }
+      },
+      "api": {
+        "gotaxiapi": {},
+        "apigotaxi": {}
+      },
+      "auth": {
+        "gotaxiAuth": {}
+      }
+    }
+  }
+}

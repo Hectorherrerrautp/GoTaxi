@@ -1,42 +1,69 @@
-// utils/mapUtils.ts
-import maplibregl from 'maplibre-gl';
+import maplibregl, { IControl } from 'maplibre-gl';
 import MaplibreGeocoder from '@maplibre/maplibre-gl-geocoder';
+
+declare const amazonLocationClient: any;
+declare const GeoPlaces: any;
 
 const API_KEY = process.env.NEXT_PUBLIC_AMAZON_LOCATION_API_KEY!;
 const AWS_REGION = process.env.NEXT_PUBLIC_AWS_REGION!;
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-/** Inicializa el mapa */
 export function initializeMap(
   container: string | HTMLElement,
   mapStyle = 'Standard',
   colorScheme = 'Light'
-) {
-  const styleUrl = `https://maps.geo.${AWS_REGION}.amazonaws.com/v2/styles/${mapStyle}/descriptor?key=${API_KEY}&color-scheme=${colorScheme}`;
-  const map = new maplibregl.Map({
-    container,
-    style: styleUrl,
-    center: [-79.5167, 8.98332],
-    zoom: 10,
-  });
+): maplibregl.Map {
+  const styleUrl =
+    `https://maps.geo.${AWS_REGION}.amazonaws.com/v2/styles/${mapStyle}/descriptor?key=${API_KEY}&color-scheme=${colorScheme}`;
+  const map = new maplibregl.Map({ container, style: styleUrl, center: [-79.5167, 8.98332], zoom: 10 });
   map.addControl(new maplibregl.NavigationControl());
   return map;
 }
 
-/** Crea instancia de GeoPlaces */
-export function getGeoPlaces(map: maplibregl.Map) {
-  // @ts-ignore: el bundle UMD inyecta amazonLocationClient
+export function getGeoPlaces(map: maplibregl.Map): any {
   const authHelper = amazonLocationClient.withAPIKey(API_KEY, AWS_REGION);
-  // @ts-ignore
-  const locationClient = new amazonLocationClient.GeoPlacesClient(
-    authHelper.getClientConfig()
-  );
-  // @ts-ignore
+  const locationClient = new amazonLocationClient.GeoPlacesClient(authHelper.getClientConfig());
   return new GeoPlaces(locationClient, map);
 }
 
-/** Agrega buscador de lugares */
-export function addSearchBox(map: maplibregl.Map, geoPlaces: any) {
-  const geocoder = new MaplibreGeocoder(geoPlaces, {
+export async function getRoute(
+  start: [number, number],
+  end: [number, number]
+): Promise<GeoJSON.LineString> {
+  const url =
+    `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Route error: ${res.status}`);
+  const { routes } = await res.json();
+  return routes[0].geometry;
+}
+
+export function drawRoute(
+  map: maplibregl.Map | undefined,
+  geometry: GeoJSON.LineString
+): void {
+  if (!map || typeof map.getSource !== 'function') {
+    console.warn('drawRoute: map inválido o no inicializado');
+    return;
+  }
+  const routeGeoJSON: GeoJSON.Feature<GeoJSON.LineString> = { type: 'Feature', geometry, properties: {} };
+  const src = map.getSource('route') as maplibregl.GeoJSONSource;
+  if (src) {
+    src.setData(routeGeoJSON);
+  } else {
+    map.addSource('route', { type: 'geojson', data: routeGeoJSON });
+    map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#3887be', 'line-width': 5 },
+    });
+  }
+}
+
+export function addSearchBox(map: maplibregl.Map, geoPlaces: any): void {
+  const geocoder: unknown = new MaplibreGeocoder(geoPlaces, {
     maplibregl,
     showResultsWhileTyping: true,
     debounceSearch: 300,
@@ -46,51 +73,19 @@ export function addSearchBox(map: maplibregl.Map, geoPlaces: any) {
     zoom: 14,
     placeholder: 'Buscar dirección o (lat,long)',
   });
-  map.addControl(geocoder, 'top-left');
-
-  geocoder.on('result', async (e: any) => {
+  map.addControl(geocoder as IControl, 'top-left');
+  (geocoder as any).on('result', async (e: any) => {
     if (e.result.result_type === 'Place') {
       const placeResults = await geoPlaces.searchByPlaceId(e.result.id);
-      if (placeResults.features.length) {
-        createPopup(placeResults.features[0]).addTo(map);
-      }
+      if (placeResults.features.length) createPopup(placeResults.features[0]).addTo(map);
     }
   });
 }
 
-/** Renderiza contenido de popup */
-export function renderPopup(feature: any) {
-  return `
-    <div class="popup-content">
-      <span class="${feature.place_type.toLowerCase()} badge">
-        ${feature.place_type}
-      </span><br>
-      ${feature.place_name}
-    </div>`;
+export function renderPopup(feature: any): string {
+  return `<div class="popup-content"><span class="${feature.place_type.toLowerCase()} badge">${feature.place_type}</span><br>${feature.place_name}</div>`;
 }
 
-/** Crea Popup genérico */
-export function createPopup(feature: any) {
-  return new maplibregl.Popup({ offset: 30 })
-    .setLngLat(feature.geometry.coordinates)
-    .setHTML(renderPopup(feature));
-}
-
-/** Habilita reverse-geocode al click */
-export function addMapClick(map: maplibregl.Map, geoPlaces: any) {
-  map.on('click', async ({ lngLat }) => {
-    const resp = await geoPlaces.reverseGeocode({
-      query: [lngLat.lng, lngLat.lat],
-      limit: 1,
-      click: true,
-    });
-    if (resp.features.length) {
-      const feature = resp.features[0];
-      const marker = new maplibregl.Marker({ color: 'orange' })
-        .setLngLat(feature.geometry.coordinates)
-        .setPopup(createPopup(feature))
-        .addTo(map);
-      marker.getPopup().on('close', () => marker.remove());
-    }
-  });
+export function createPopup(feature: any): maplibregl.Popup {
+  return new maplibregl.Popup({ offset: 30 }).setLngLat(feature.geometry.coordinates).setHTML(renderPopup(feature));
 }
