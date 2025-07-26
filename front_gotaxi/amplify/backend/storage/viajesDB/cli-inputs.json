@@ -1,0 +1,18 @@
+{
+  "resourceName": "viajesDB",
+  "tableName": "viajesDB",
+  "partitionKey": {
+    "fieldName": "viajeId",
+    "fieldType": "string"
+  },
+  "gsi": [
+    {
+      "name": "estadoIndex",
+      "partitionKey": {
+        "fieldName": "estado",
+        "fieldType": "string"
+      }
+    }
+  ],
+  "triggerFunctions": []
+}

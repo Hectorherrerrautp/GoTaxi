@@ -15,7 +15,7 @@
       "function": {
         "SolicitarViaje": {
           "deploymentBucketName": "amplify-frontgotaxi-dev-e3ab8-deployment",
-          "s3Key": "amplify-builds/SolicitarViaje-76415842436c54583055-build.zip"
+          "s3Key": "amplify-builds/SolicitarViaje-4261554b72475063794b-build.zip"
         }
       },
       "api": {
@@ -24,6 +24,9 @@
       },
       "auth": {
         "gotaxiAuth": {}
+      },
+      "storage": {
+        "viajesDB": {}
       }
     }
   }

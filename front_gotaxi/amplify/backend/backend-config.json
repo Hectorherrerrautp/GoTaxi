@@ -81,5 +81,11 @@
         }
       ]
     }
+  },
+  "storage": {
+    "viajesDB": {
+      "providerPlugin": "awscloudformation",
+      "service": "DynamoDB"
+    }
   }
 }

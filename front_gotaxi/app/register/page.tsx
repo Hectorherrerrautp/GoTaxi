@@ -4,28 +4,29 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Importa Amplify desde el núcleo modular
+// Importa Amplify desde el paquete core
 import { Amplify } from '@aws-amplify/core';
-// Importa únicamente la función signUp del módulo Auth
+// Importa sólo la función signUp desde auth
 import { signUp } from '@aws-amplify/auth';
 
-import awsconfig from '../../src/aws-exports';
+// Importa tu configuración (con extensión explícita)
+import awsconfig from '../../src/aws-exports.js';
 
-// Inicializa Amplify con tu configuración
+// Inicializa Amplify
 Amplify.configure(awsconfig);
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail]     = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole]       = useState<'user'|'driver'>('user');
-  const [error, setError]     = useState('');
+  const [role, setRole]         = useState<'user'|'driver'>('user');
+  const [error, setError]       = useState('');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      // Llamada modular a signUp; casteamos a any para evitar errores TS
+      // Llamamos directamente a signUp
       await signUp({
         username: email,
         password,
@@ -35,10 +36,9 @@ export default function RegisterPage() {
         }
       } as any);
 
-      // Redirige según el rol escogido
       router.push(role === 'driver' ? '/driver/home' : '/user/home');
     } catch (err: any) {
-      setError(err.message || 'Error al registrarse');
+      setError(err?.message ?? 'Error al registrarse');
     }
   };
 
@@ -47,9 +47,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
 
-        {error && (
-          <p className="text-red-500 text-center mb-4">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         <form onSubmit={handleRegister} className="space-y-4">
           {/* Email */}
