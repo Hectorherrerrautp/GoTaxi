@@ -4,41 +4,56 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Importa Amplify desde el paquete core
+// Importaciones de Amplify/Core y Auth
 import { Amplify } from '@aws-amplify/core';
-// Importa sólo la función signUp desde auth
 import { signUp } from '@aws-amplify/auth';
 
-// Importa tu configuración (con extensión explícita)
-import awsconfig from '../../src/aws-exports.js';
+import awsconfig from '../../src/aws-exports';
 
-// Inicializa Amplify
 Amplify.configure(awsconfig);
+
+// Tipado para los atributos personalizados de registro
+interface SignUpAttributes {
+  email: string;
+  'custom:role': 'user' | 'driver';
+}
+
+// Tipado para los parámetros de signUp
+interface SignUpInput {
+  username: string;
+  password: string;
+  attributes: SignUpAttributes;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail]       = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [role, setRole]         = useState<'user'|'driver'>('user');
-  const [error, setError]       = useState('');
+  const [error, setError]       = useState<string>('');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    try {
-      // Llamamos directamente a signUp
-      await signUp({
-        username: email,
-        password,
-        attributes: {
-          email,
-          'custom:role': role,
-        }
-      } as any);
 
+    const params: SignUpInput = {
+      username: email,
+      password,
+      attributes: {
+        email,
+        'custom:role': role,
+      }
+    };
+
+    try {
+      await signUp(params);
       router.push(role === 'driver' ? '/driver/home' : '/user/home');
-    } catch (err: any) {
-      setError(err?.message ?? 'Error al registrarse');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
     }
   };
 

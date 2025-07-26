@@ -19,6 +19,9 @@ interface Viaje {
   estado: string;
 }
 
+// Puede llegar o bien un array directo de Viaje, o un objeto con campo items
+type SolicitudesResponse = Viaje[] | { items: Viaje[] };
+
 const API_BASE = 'https://012ghhm2ee.execute-api.us-east-1.amazonaws.com/dev';
 
 export default function DriverHome() {
@@ -31,19 +34,20 @@ export default function DriverHome() {
     const fetchSolicitudes = async () => {
       try {
         const res = await fetch(`${API_BASE}/SolicitarViaje?estado=en_espera`);
-        const json = await res.json();
-        const arr: Viaje[] = Array.isArray(json)
-          ? json
-          : Array.isArray((json as any).items)
-            ? (json as any).items
+        const data = (await res.json()) as SolicitudesResponse;
+        const arr: Viaje[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data.items)
+            ? data.items
             : [];
         setSolicitudes(arr);
-      } catch (e) {
-        console.error('Error fetching solicitudes', e);
+      } catch (err: unknown) {
+        console.error('Error fetching solicitudes', err);
       }
     };
+
     fetchSolicitudes();
-    const interval = setInterval(fetchSolicitudes, 10000);
+    const interval = setInterval(fetchSolicitudes, 10_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -78,13 +82,13 @@ export default function DriverHome() {
               drawRoute(mapRef.current, geo);
             }
           },
-          (err) => {
-            console.error('Error al obtener ubicación', err);
+          (geoError) => {
+            console.error('Error al obtener ubicación', geoError);
           },
           { enableHighAccuracy: true }
         );
       })
-      .catch((e) => console.error('Error al aceptar viaje', e));
+      .catch((err: unknown) => console.error('Error al aceptar viaje', err));
   };
 
   // 4) Iniciar transporte: ruta recogida → destino
@@ -93,8 +97,8 @@ export default function DriverHome() {
     try {
       const geo = await getRoute(activa.origenCoords, activa.destinoCoords);
       drawRoute(mapRef.current, geo);
-    } catch (e) {
-      console.error('Error al trazar ruta al destino', e);
+    } catch (err: unknown) {
+      console.error('Error al trazar ruta al destino', err);
     }
   };
 
@@ -103,15 +107,16 @@ export default function DriverHome() {
     fetch(`${API_BASE}/SolicitarViaje`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        viajeId,
-        nuevoEstado: 'rechazado',
-      }),
+      body: JSON.stringify({ viajeId, nuevoEstado: 'rechazado' }),
     })
-      .then(() => {
-        setSolicitudes((s) => s.filter((v) => v.viajeId !== viajeId));
-      })
-      .catch((e) => console.error('Error al rechazar viaje', e));
+      .then(() =>
+        setSolicitudes((prev) =>
+          prev.filter((v) => v.viajeId !== viajeId)
+        )
+      )
+      .catch((err: unknown) =>
+        console.error('Error al rechazar viaje', err)
+      );
   };
 
   return (
@@ -168,7 +173,6 @@ export default function DriverHome() {
             </div>
           ))}
         </aside>
-
         <div id="map" className="flex-1" />
       </main>
     </div>

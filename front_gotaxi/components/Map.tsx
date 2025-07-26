@@ -1,4 +1,4 @@
-//map.tsx
+// components/Map.tsx
 'use client';
 
 import { useRef, useEffect } from 'react';
@@ -52,7 +52,8 @@ export default function Map({ onSetPickup, onSetDropoff }: MapProps) {
       const resp = await geoPlaces.reverseGeocode({ query: [lngLat.lng, lngLat.lat], limit: 1, click: true });
       if (!resp.features.length) return;
       const feat = resp.features[0];
-      const c: [number, number] = feat.geometry.coordinates as any;
+      // Asumimos que feat.geometry.coordinates es [number, number]
+      const c = feat.geometry.coordinates as [number, number];
 
       if (!coordsRef.current.pickup) {
         coordsRef.current.pickup = c;
@@ -64,21 +65,38 @@ export default function Map({ onSetPickup, onSetDropoff }: MapProps) {
         coordsRef.current.dropoff = c;
         dropoffMarkerRef.current = new maplibregl.Marker({ color: 'red' }).setLngLat(c).addTo(m);
         onSetDropoff(feat.place_name, c);
-        try { const g = await getRoute(coordsRef.current.pickup!, coordsRef.current.dropoff!); drawRoute(m, g); } catch {};
+        try {
+          const g = await getRoute(coordsRef.current.pickup, coordsRef.current.dropoff);
+          drawRoute(m, g);
+        } catch {
+          // Ignorar errores de ruta
+        }
         return;
       }
 
+      // Reemplazar dropoff existente
       dropoffMarkerRef.current?.remove();
       if (m.getLayer('route')) m.removeLayer('route');
       if (m.getSource('route')) m.removeSource('route');
       coordsRef.current.dropoff = c;
       dropoffMarkerRef.current = new maplibregl.Marker({ color: 'red' }).setLngLat(c).addTo(m);
       onSetDropoff(feat.place_name, c);
-      try { const g = await getRoute(coordsRef.current.pickup!, coordsRef.current.dropoff!); drawRoute(m, g); } catch {};
+      try {
+        const g = await getRoute(coordsRef.current.pickup, coordsRef.current.dropoff);
+        drawRoute(m, g);
+      } catch {
+        // Ignorar errores de ruta
+      }
     });
 
     return () => map.remove();
   }, []);
 
-  return <div ref={containerRef} className="h-full w-full rounded-lg" style={{ minHeight: '300px' }} />;
+  return (
+    <div
+      ref={containerRef}
+      className="h-full w-full rounded-lg"
+      style={{ minHeight: '300px' }}
+    />
+  );
 }
