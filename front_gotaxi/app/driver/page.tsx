@@ -1,4 +1,3 @@
-// app/driver/page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -19,7 +18,6 @@ interface Viaje {
   estado: string;
 }
 
-// Puede llegar o bien un array directo de Viaje, o un objeto con campo items
 type SolicitudesResponse = Viaje[] | { items: Viaje[] };
 
 const API_BASE = 'https://012ghhm2ee.execute-api.us-east-1.amazonaws.com/dev';
@@ -30,37 +28,38 @@ export default function DriverHome() {
   const mapRef = useRef<ReturnType<typeof initializeMap> | null>(null);
 
   // 1) Polling de solicitudes pendientes
-  useEffect(() => {
-    const fetchSolicitudes = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/SolicitarViaje?estado=en_espera`);
-        const data = (await res.json()) as SolicitudesResponse;
-        const arr: Viaje[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data.items)
-            ? data.items
-            : [];
-        setSolicitudes(arr);
-      } catch (err: unknown) {
-        console.error('Error fetching solicitudes', err);
-      }
-    };
+  const fetchSolicitudes = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/solicitar-viaje?estado=en_espera`);
+      const data = (await res.json()) as SolicitudesResponse;
+      const arr: Viaje[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data.items)
+        ? data.items
+        : [];
+      setSolicitudes(arr);
+    } catch (err: unknown) {
+      console.error('Error fetching solicitudes', err);
+    }
+  };
 
-    fetchSolicitudes();
-    const interval = setInterval(fetchSolicitudes, 10_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // 2) Inicializar mapa
+  // 2) Inicializar mapa y arrancar polling
   useEffect(() => {
     const map = initializeMap('map', 'Standard', 'Light');
     mapRef.current = map;
-    return () => map.remove();
+
+    fetchSolicitudes();
+    const interval = setInterval(fetchSolicitudes, 10000);
+
+    return () => {
+      map.remove();
+      clearInterval(interval);
+    };
   }, []);
 
   // 3) Aceptar viaje
   const aceptarViaje = (viaje: Viaje) => {
-    fetch(`${API_BASE}/SolicitarViaje`, {
+    fetch(`${API_BASE}/solicitar-viaje`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -69,69 +68,87 @@ export default function DriverHome() {
         nuevoEstado: 'en_curso',
       }),
     })
-      .then(() => {
-        setActiva(viaje);
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        // 3.1 actualizar UI local
+        setSolicitudes((prev) =>
+          prev.filter((v) => v.viajeId !== viaje.viajeId)
+        );
+        setActiva({ ...viaje, estado: 'en_curso' });
+        // 3.2 trazar ruta actual → origen
         navigator.geolocation.getCurrentPosition(
           async ({ coords }) => {
-            const currentCoords: [number, number] = [
+            const current: [number, number] = [
               coords.longitude,
               coords.latitude,
             ];
             if (mapRef.current) {
-              const geo = await getRoute(currentCoords, viaje.origenCoords);
+              const geo = await getRoute(current, viaje.origenCoords);
               drawRoute(mapRef.current, geo);
             }
           },
-          (geoError) => {
-            console.error('Error al obtener ubicación', geoError);
-          },
+          (err) => console.error('Geo error', err),
           { enableHighAccuracy: true }
         );
       })
-      .catch((err: unknown) => console.error('Error al aceptar viaje', err));
+      .catch((err) => console.error('Error al aceptar viaje:', err));
   };
 
-  // 4) Iniciar transporte: ruta recogida → destino
+  // 4) Iniciar transporte: origen → destino
   const iniciarTransporte = async () => {
     if (!activa || !mapRef.current) return;
     try {
       const geo = await getRoute(activa.origenCoords, activa.destinoCoords);
       drawRoute(mapRef.current, geo);
-    } catch (err: unknown) {
-      console.error('Error al trazar ruta al destino', err);
+    } catch (err) {
+      console.error('Error al trazar ruta al destino:', err);
     }
   };
 
   // 5) Rechazar viaje
   const rechazarViaje = (viajeId: string) => {
-    fetch(`${API_BASE}/SolicitarViaje`, {
+    fetch(`${API_BASE}/solicitar-viaje`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ viajeId, nuevoEstado: 'rechazado' }),
     })
-      .then(() =>
+      .then((res) => {
+        if (!res.ok) throw new Error(`Error ${res.status}`);
         setSolicitudes((prev) =>
           prev.filter((v) => v.viajeId !== viajeId)
-        )
-      )
-      .catch((err: unknown) =>
-        console.error('Error al rechazar viaje', err)
-      );
+        );
+      })
+      .catch((err) => console.error('Error al rechazar viaje:', err));
   };
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="px-6 py-4 bg-black text-white">Panel Conductor</header>
+          <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+        <div className="flex items-center">
+          <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
+          <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
+        </div>
+        <nav>
+          <a href="/reports" className="text-white hover:text-gray-300 font-medium">Reportes</a>
+        </nav>
+        <div className="w-8 h-8 rounded-full overflow-hidden">
+          <img src="/userloo.png" alt="Perfil" className="w-full h-full object-cover" />
+        </div>
+      </header>
       <main className="flex flex-1">
-        <aside className="w-80 bg-white p-4 overflow-auto">
+        <aside className="w-80 bg-black p-4 overflow-auto">
           <h2 className="text-lg font-semibold mb-2">Solicitudes</h2>
 
           {activa && (
-            <div className="p-2 bg-green-100 rounded mb-4">
+            <div className="p-2 bg-green-500 rounded mb-4">
               <strong>Viaje activo:</strong> {activa.viajeId}
+              <br />
+              <span>
+                {activa.origen} → {activa.destino}
+              </span>
               <button
                 onClick={iniciarTransporte}
-                className="ml-2 text-sm text-blue-600"
+                className="mt-2 px-2 py-1 text-sm bg-blue-600 text-white rounded"
               >
                 Iniciar transporte
               </button>

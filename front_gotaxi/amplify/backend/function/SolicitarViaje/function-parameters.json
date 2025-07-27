@@ -1,3 +1,17 @@
 {
-  "lambdaLayers": []
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "viajesTableName",
+      "environmentVariableName": "ViajesTableName"
+    }
+  ],
+  "permissions": {
+    "storage": {
+      "viajesDB": [
+        "create",
+        "read"
+      ]
+    }
+  }
 }

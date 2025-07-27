@@ -13,20 +13,6 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "API Gateway"
-    },
-    "gotaxiapi": {
-      "dependsOn": [
-        {
-          "attributes": [
-            "Name",
-            "Arn"
-          ],
-          "category": "function",
-          "resourceName": "SolicitarViaje"
-        }
-      ],
-      "providerPlugin": "awscloudformation",
-      "service": "API Gateway"
     }
   },
   "auth": {
@@ -60,6 +46,17 @@
   "function": {
     "SolicitarViaje": {
       "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn",
+            "StreamArn"
+          ],
+          "category": "storage",
+          "resourceName": "viajesDB"
+        }
+      ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     }
@@ -74,6 +71,14 @@
       ]
     },
     "AMPLIFY_function_SolicitarViaje_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "SolicitarViaje"
+        }
+      ]
+    },
+    "AMPLIFY_function_SolicitarViaje_viajesTableName": {
       "usedBy": [
         {
           "category": "function",

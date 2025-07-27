@@ -15,11 +15,11 @@
       "function": {
         "SolicitarViaje": {
           "deploymentBucketName": "amplify-frontgotaxi-dev-e3ab8-deployment",
-          "s3Key": "amplify-builds/SolicitarViaje-4261554b72475063794b-build.zip"
+          "s3Key": "amplify-builds/SolicitarViaje-4f32447866436b556466-build.zip",
+          "viajesTableName": "viajesDB-dev"
         }
       },
       "api": {
-        "gotaxiapi": {},
         "apigotaxi": {}
       },
       "auth": {

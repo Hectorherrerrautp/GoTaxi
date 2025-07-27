@@ -1,0 +1,4 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"viajeId\":\"viaje_1753548873295\",\"nuevoEstado\":\"en_curso\"}"
+}

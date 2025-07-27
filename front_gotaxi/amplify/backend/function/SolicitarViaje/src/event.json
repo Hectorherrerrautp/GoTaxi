@@ -1,5 +1,4 @@
 {
-  "key1": "value1",
-  "key2": "value2",
-  "key3": "value3"
+  "httpMethod": "POST",
+  "body": "{\"userId\":\"usuario123\",\"origen\":\"Plaza Panamá\",\"destino\":\"Multiplaza\",\"origenCoords\":[-79.5343,8.9824],\"destinoCoords\":[-79.5188,8.9765],\"distancia_km\":3.2,\"tarifa_estim\":6.34}"
 }
