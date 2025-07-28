@@ -29,9 +29,14 @@ export default function Reportes() {
         if (!res.ok) throw new Error('Error al obtener los reportes');
         const data = await res.json();
         setReportes(data);
-      } catch (err: any) {
-        console.error(err);
-        setError('No se pudieron cargar los reportes');
+      } catch (err) {
+        if (err instanceof Error) {
+          console.error(err.message);
+          setError('No se pudieron cargar los reportes: ' + err.message);
+        } else {
+          console.error('Error desconocido');
+          setError('Error desconocido');
+        }
       }
     };
 
