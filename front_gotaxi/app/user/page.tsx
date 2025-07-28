@@ -1,3 +1,4 @@
+// app/user/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -129,21 +130,23 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+       <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
         <div className="flex items-center">
-          <img src="/logogotaxi.png" alt="Logo" className="w-8 h-8" />
+          <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
           <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
         </div>
         <nav>
-          <a href="/reports" className="text-white">Reportes</a>
+          <a href="/reports" className="text-white hover:text-gray-300 font-medium">Reportes</a>
         </nav>
+        <div className="w-8 h-8 rounded-full overflow-hidden">
+          <img src="/userloo.png" alt="Perfil" className="w-full h-full object-cover" />
+        </div>
       </header>
-
       <main className="flex flex-1 overflow-hidden">
-        <aside className="w-full max-w-sm bg-white m-6 p-4 rounded-lg shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Get a ride</h2>
+        <aside className="w-full max-w-sm bg-black m-6 p-4 rounded-lg shadow-lg">
+          <h2 className="text-white text-xl font-semibold mb-4">Get a ride</h2>
           <form onSubmit={solicitarViaje} className="space-y-4">
-            <div className="border rounded px-3 py-2">
+            <div className="border-yellow-500 border rounded px-3 py-2">
               <input
                 type="text"
                 placeholder="Pickup location"
@@ -152,7 +155,7 @@ export default function HomePage() {
                 className="w-full"
               />
             </div>
-            <div className="border rounded px-3 py-2">
+            <div className="border-yellow-500 border rounded px-3 py-2">
               <input
                 type="text"
                 placeholder="Dropoff location"
@@ -168,13 +171,13 @@ export default function HomePage() {
             )}
             <button
               type="submit"
-              className="w-full bg-yellow-500 text-white py-2 rounded-lg"
+              className="text-black w-full bg-yellow-500  py-2 rounded-lg"
             >
               Pedir Viaje
             </button>
           </form>
           {status && (
-            <div className="mt-4 p-3 bg-blue-100 text-blue-800 rounded">
+            <div className="mt-4 p-3 bg-white text-black rounded">
               <strong>Estado:</strong> {status}
             </div>
           )}

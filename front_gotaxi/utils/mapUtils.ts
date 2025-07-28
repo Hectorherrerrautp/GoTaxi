@@ -1,3 +1,4 @@
+//mapUtils.ts
 import maplibregl, { IControl } from 'maplibre-gl';
 import MaplibreGeocoder from '@maplibre/maplibre-gl-geocoder';
 

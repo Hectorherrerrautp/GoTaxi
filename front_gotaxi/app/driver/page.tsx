@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import maplibregl from 'maplibre-gl'; // Import necesario
 import {
   initializeMap,
   getRoute,
@@ -25,7 +26,7 @@ const API_BASE = 'https://012ghhm2ee.execute-api.us-east-1.amazonaws.com/dev';
 export default function DriverHome() {
   const [solicitudes, setSolicitudes] = useState<Viaje[]>([]);
   const [activa, setActiva] = useState<Viaje | null>(null);
-  const mapRef = useRef<ReturnType<typeof initializeMap> | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
 
   // 1) Polling de solicitudes pendientes
   const fetchSolicitudes = async () => {
@@ -47,6 +48,21 @@ export default function DriverHome() {
   useEffect(() => {
     const map = initializeMap('map', 'Standard', 'Light');
     mapRef.current = map;
+
+    // Mostrar ubicación del conductor
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const current: [number, number] = [coords.longitude, coords.latitude];
+        map.setCenter(current);
+
+        // Agregar marcador de ubicación
+        new maplibregl.Marker({ color: 'green' })
+          .setLngLat(current)
+          .addTo(map);
+      },
+      (err) => console.error('Error al obtener ubicación del conductor:', err),
+      { enableHighAccuracy: true }
+    );
 
     fetchSolicitudes();
     const interval = setInterval(fetchSolicitudes, 10000);
@@ -70,12 +86,12 @@ export default function DriverHome() {
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`Error ${res.status}`);
-        // 3.1 actualizar UI local
         setSolicitudes((prev) =>
           prev.filter((v) => v.viajeId !== viaje.viajeId)
         );
         setActiva({ ...viaje, estado: 'en_curso' });
-        // 3.2 trazar ruta actual → origen
+
+        // Ruta desde ubicación actual al origen
         navigator.geolocation.getCurrentPosition(
           async ({ coords }) => {
             const current: [number, number] = [
@@ -123,7 +139,7 @@ export default function DriverHome() {
 
   return (
     <div className="flex flex-col h-screen">
-          <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+      <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
         <div className="flex items-center">
           <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
           <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
@@ -136,19 +152,20 @@ export default function DriverHome() {
         </div>
       </header>
       <main className="flex flex-1">
-        <aside className="w-80 bg-black p-4 overflow-auto">
+        <aside className="w-80 bg-black p-4 overflow-auto text-white">
           <h2 className="text-lg font-semibold mb-2">Solicitudes</h2>
 
           {activa && (
-            <div className="p-2 bg-green-500 rounded mb-4">
+            <div className="p-2 bg-yellow-500 text-black rounded mb-4">
               <strong>Viaje activo:</strong> {activa.viajeId}
-              <br />
+              <br /><br />
               <span>
-                {activa.origen} → {activa.destino}
+                <strong>De:</strong><br /> {activa.origen}<br /><br />
+                <strong>Hasta:</strong><br /> {activa.destino}<br />
               </span>
               <button
                 onClick={iniciarTransporte}
-                className="mt-2 px-2 py-1 text-sm bg-blue-600 text-white rounded"
+                className="mt-2 px-2 py-1 text-sm bg-white text-black rounded"
               >
                 Iniciar transporte
               </button>
@@ -161,28 +178,20 @@ export default function DriverHome() {
 
           {solicitudes.map((v) => (
             <div key={v.viajeId} className="border-b pb-2 mb-2">
-              <p>
-                <strong>ID:</strong> {v.viajeId}
-              </p>
-              <p>
-                <strong>Origen:</strong> {v.origen}
-              </p>
-              <p>
-                <strong>Destino:</strong> {v.destino}
-              </p>
-              <p>
-                <strong>Tarifa:</strong> ${v.tarifa_estim.toFixed(2)}
-              </p>
+              <p><strong>ID:</strong> {v.viajeId}</p>
+              <p><strong>Origen:</strong> {v.origen}</p>
+              <p><strong>Destino:</strong> {v.destino}</p>
+              <p><strong>Tarifa:</strong> ${v.tarifa_estim.toFixed(2)}</p>
               <div className="flex space-x-2 mt-2">
                 <button
                   onClick={() => aceptarViaje(v)}
-                  className="px-2 py-1 bg-green-500 text-white rounded"
+                  className="px-2 py-1 bg-yellow-500 text-black rounded"
                 >
                   Aceptar
                 </button>
                 <button
                   onClick={() => rechazarViaje(v.viajeId)}
-                  className="px-2 py-1 bg-red-500 text-white rounded"
+                  className="px-2 py-1 bg-white text-black rounded"
                 >
                   Rechazar
                 </button>
