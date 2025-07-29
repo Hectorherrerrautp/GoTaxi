@@ -1,3 +1,4 @@
+// app/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -20,7 +21,8 @@ export default function Login() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
-  const [selectedRole, setSelectedRole] = useState<'user' | 'driver'>('user'); // solo visual
+  const [selectedRole, setSelectedRole] =
+    useState<'user' | 'driver'>('user'); // solo visual
 
   /* -------- handler de inicio de sesión -------- */
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,20 +42,24 @@ export default function Login() {
       await signIn({ username: email, password });
 
       /* 3️⃣  Obtener rol */
-      const session  = await fetchAuthSession();
-      const payload  = session.tokens?.idToken?.payload;
+      const session = await fetchAuthSession();
+      const payload = session.tokens?.idToken?.payload;
       const roleFromToken = payload?.['custom:role'] as string | undefined;
 
       // ⇨ Si el token no trae rol, usamos el seleccionado en la UI
       const role = roleFromToken ?? selectedRole;
 
       router.push(role === 'driver' ? '/driver' : '/user');
-    } catch (err: any) {
+    } catch (err: unknown) {                    // ← sin `any`
       console.error('Login error:', err);
-      if (err?.name === 'UserNotConfirmedException') {
+
+      // type-guard rápido para errores Amplify
+      const authErr = err as { name?: string; message?: string };
+
+      if (authErr.name === 'UserNotConfirmedException') {
         router.push(`/confirm?email=${encodeURIComponent(email)}`);
       } else {
-        setError(err.message || 'Credenciales inválidas');
+        setError(authErr.message ?? 'Credenciales inválidas');
       }
     }
   };
@@ -85,7 +91,7 @@ export default function Login() {
               id="email"
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               placeholder="correo@example.com"
@@ -101,7 +107,7 @@ export default function Login() {
               id="password"
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               placeholder="••••••••"

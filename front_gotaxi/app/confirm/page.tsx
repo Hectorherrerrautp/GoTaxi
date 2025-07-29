@@ -1,3 +1,4 @@
+// app/confirm/page.tsx
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -5,13 +6,13 @@ import { useState } from 'react';
 import { confirmSignUp, resendSignUpCode } from 'aws-amplify/auth'; // v6 APIs
 
 export default function ConfirmPage() {
-  const router = useRouter();
+  const router       = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get('email') || '';
+  const email        = searchParams.get('email') || '';
 
-  const [code, setCode] = useState('');
+  const [code, setCode]   = useState('');
   const [error, setError] = useState('');
-  const [info,  setInfo] = useState('');
+  const [info,  setInfo]  = useState('');
 
   /* ───────── Confirmar código ───────── */
   const handleConfirm = async (e: React.FormEvent) => {
@@ -22,9 +23,11 @@ export default function ConfirmPage() {
     try {
       await confirmSignUp({ username: email, confirmationCode: code });
       setInfo('Cuenta confirmada. Redirigiendo al login…');
-      router.push('/');                 // ← redirección correcta
-    } catch (err: any) {
-      setError(err.message || 'Error al confirmar');
+      router.push('/'); // redirección al login
+    } catch (err: unknown) {               // ← sin `any`
+      setError(
+        err instanceof Error ? err.message : 'Error al confirmar',
+      );
     }
   };
 
@@ -35,8 +38,10 @@ export default function ConfirmPage() {
     try {
       await resendSignUpCode({ username: email });
       setInfo('Código reenviado a tu correo.');
-    } catch (err: any) {
-      setError(err.message || 'No fue posible reenviar el código');
+    } catch (err: unknown) {               // ← sin `any`
+      setError(
+        err instanceof Error ? err.message : 'No fue posible reenviar el código',
+      );
     }
   };
 
