@@ -1,7 +1,9 @@
+// app/user/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Map from '../../components/Map';
+import ProfileMenu from '../../components/ProfileMenu';
 
 // ——————————————————————————————————————————
 // Util: distancia Haversine
@@ -146,13 +148,7 @@ export default function HomePage() {
             Reportes
           </a>
         </nav>
-        <div className="w-8 h-8 rounded-full overflow-hidden">
-          <img
-            src="/userloo.png"
-            alt="Perfil"
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <ProfileMenu />
       </header>
 
       {/* Main */}

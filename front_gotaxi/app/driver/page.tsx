@@ -1,8 +1,10 @@
+// app/driver/page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { GeolocateControl } from 'maplibre-gl';
 import { initializeMap, getRoute, drawRoute } from '../../utils/mapUtils';
+import ProfileMenu from '../../components/ProfileMenu';
 
 interface Viaje {
   viajeId: string;
@@ -23,9 +25,12 @@ const API_BASE =
 export default function DriverHome() {
   const [solicitudes, setSolicitudes] = useState<Viaje[]>([]);
   const [activa, setActiva] = useState<Viaje | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
 
-  /* ───────────────────────────────────────────── Polling solicitudes */
+  const mapRef          = useRef<maplibregl.Map | null>(null);
+  const driverMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const hasCenteredRef  = useRef(false); // ← registra si ya nos centramos
+
+  /* ───────────────────────── Polling de solicitudes en espera */
   const fetchSolicitudes = async () => {
     try {
       const res = await fetch(`${API_BASE}/solicitar-viaje?estado=en_espera`);
@@ -41,30 +46,53 @@ export default function DriverHome() {
     }
   };
 
-  /* ───────────────────────────────────────────── Mapa + polling */
+  /* ───────────────────────── Mapa + geolocalización + polling */
   useEffect(() => {
     const map = initializeMap('map', 'Standard', 'Light');
     mapRef.current = map;
 
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const current: [number, number] = [coords.longitude, coords.latitude];
-        map.setCenter(current);
-        new maplibregl.Marker({ color: 'green' }).setLngLat(current).addTo(map);
-      },
-      (err) => console.error('Geo error', err),
-      { enableHighAccuracy: true },
-    );
+    /* Control de geolocalización */
+    const geo = new GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showAccuracyCircle: false,
+      showUserLocation: true,
+    });
+    map.addControl(geo, 'top-left');
 
+    /* Cada fix actualiza o crea el marcador verde del conductor */
+    geo.on('geolocate', (e) => {
+      const current: [number, number] = [e.coords.longitude, e.coords.latitude];
+
+      if (!driverMarkerRef.current) {
+        driverMarkerRef.current = new maplibregl.Marker({ color: 'green' })
+          .setLngLat(current)
+          .addTo(map);
+      } else {
+        driverMarkerRef.current.setLngLat(current);
+      }
+
+      /* Centrar/zoom SOLO la primera vez que recibimos posición */
+      if (!hasCenteredRef.current) {
+        hasCenteredRef.current = true;
+        map.flyTo({ center: current, zoom: 15, speed: 1.6, curve: 1.2 });
+      }
+    });
+
+    /* Solicita inmediatamente la primera localización */
+    geo.trigger();
+
+    /* Polling de solicitudes */
     fetchSolicitudes();
     const interval = setInterval(fetchSolicitudes, 10000);
+
     return () => {
       map.remove();
       clearInterval(interval);
     };
   }, []);
 
-  /* ───────────────────────────────────────────── Aceptar viaje  */
+  /* ───────────────────────── Aceptar viaje */
   const aceptarViaje = (viaje: Viaje) => {
     fetch(`${API_BASE}/solicitar-viaje`, {
       method: 'POST',
@@ -72,41 +100,31 @@ export default function DriverHome() {
       body: JSON.stringify({
         viajeId: viaje.viajeId,
         conductorId: 'cond123',
-        nuevoEstado: 'aceptado', // ← ahora “aceptado”
+        nuevoEstado: 'aceptado',
       }),
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`Error ${res.status}`);
-
-        setSolicitudes((prev) =>
-          prev.filter((v) => v.viajeId !== viaje.viajeId),
-        );
+        setSolicitudes((prev) => prev.filter((v) => v.viajeId !== viaje.viajeId));
         setActiva({ ...viaje, estado: 'aceptado' });
 
-        /* Ruta hasta el punto de recogida */
-        navigator.geolocation.getCurrentPosition(
-          async ({ coords }) => {
-            const current: [number, number] = [
-              coords.longitude,
-              coords.latitude,
-            ];
-            if (mapRef.current) {
-              const geo = await getRoute(current, viaje.origenCoords);
-              drawRoute(mapRef.current, geo);
-            }
-          },
-          (err) => console.error('Geo error', err),
-          { enableHighAccuracy: true },
-        );
+        /* Ruta desde la ubicación actual hasta el pickup */
+        if (mapRef.current && driverMarkerRef.current) {
+          const current = driverMarkerRef.current.getLngLat().toArray() as [
+            number,
+            number,
+          ];
+          const geo = await getRoute(current, viaje.origenCoords);
+          drawRoute(mapRef.current, geo);
+        }
       })
       .catch((err) => console.error('Error al aceptar viaje:', err));
   };
 
-  /* ───────────────────────────────────────────── Iniciar transporte */
+  /* ───────────────────────── Iniciar transporte */
   const iniciarTransporte = async () => {
     if (!activa || !mapRef.current) return;
     try {
-      /* 1) Cambiar estado a “en_curso” */
       await fetch(`${API_BASE}/solicitar-viaje`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -117,7 +135,6 @@ export default function DriverHome() {
       });
       setActiva({ ...activa, estado: 'en_curso' });
 
-      /* 2) Trazar ruta origen → destino */
       const geo = await getRoute(activa.origenCoords, activa.destinoCoords);
       drawRoute(mapRef.current, geo);
     } catch (err) {
@@ -125,7 +142,7 @@ export default function DriverHome() {
     }
   };
 
-  /* ───────────────────────────────────────────── Finalizar viaje */
+  /* ───────────────────────── Finalizar viaje */
   const finalizarViaje = async () => {
     if (!activa) return;
     try {
@@ -140,9 +157,9 @@ export default function DriverHome() {
       if (!res.ok) throw new Error(`Error ${res.status}`);
 
       setActiva(null);
-      setSolicitudes([]); // refresco en próximo polling
+      setSolicitudes([]);
 
-      /* Limpia ruta del mapa */
+      /* Limpia la ruta del mapa */
       if (mapRef.current) {
         mapRef.current.getLayer('route') && mapRef.current.removeLayer('route');
         mapRef.current.getSource('route') &&
@@ -153,7 +170,7 @@ export default function DriverHome() {
     }
   };
 
-  /* ───────────────────────────────────────────── Rechazar */
+  /* ───────────────────────── Rechazar viaje */
   const rechazarViaje = (viajeId: string) => {
     fetch(`${API_BASE}/solicitar-viaje`, {
       method: 'POST',
@@ -167,37 +184,29 @@ export default function DriverHome() {
       .catch((err) => console.error('Error al rechazar viaje:', err));
   };
 
-  /* ───────────────────────────────────────────── UI */
+  /* ───────────────────────── UI */
   return (
     <div className="flex flex-col h-screen">
+      {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
         <div className="flex items-center">
           <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
           <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
         </div>
         <nav>
-          <a
-            href="/reports"
-            className="text-white hover:text-gray-300 font-medium"
-          >
+          <a href="/reports" className="text-white hover:text-gray-300 font-medium">
             Reportes
           </a>
         </nav>
-        <div className="w-8 h-8 rounded-full overflow-hidden">
-          <img
-            src="/userloo.png"
-            alt="Perfil"
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <ProfileMenu />
       </header>
 
+      {/* Main */}
       <main className="flex flex-1">
         {/* Panel lateral */}
         <aside className="w-80 bg-black p-4 overflow-auto text-white">
           <h2 className="text-lg font-semibold mb-2">Solicitudes</h2>
 
-          {/* Viaje activo */}
           {activa && (
             <div className="p-2 bg-yellow-500 text-black rounded mb-4">
               <strong>Viaje activo:</strong> {activa.viajeId}
@@ -210,7 +219,6 @@ export default function DriverHome() {
                 <br />
                 <strong>Hasta:</strong> {activa.destino}
               </span>
-              {/* Botones contextuales */}
               {activa.estado === 'aceptado' && (
                 <button
                   onClick={iniciarTransporte}
@@ -230,25 +238,16 @@ export default function DriverHome() {
             </div>
           )}
 
-          {/* Nuevas solicitudes */}
           {solicitudes.length === 0 && !activa && (
             <p>No hay solicitudes pendientes.</p>
           )}
 
           {solicitudes.map((v) => (
             <div key={v.viajeId} className="border-b pb-2 mb-2">
-              <p>
-                <strong>ID:</strong> {v.viajeId}
-              </p>
-              <p>
-                <strong>Origen:</strong> {v.origen}
-              </p>
-              <p>
-                <strong>Destino:</strong> {v.destino}
-              </p>
-              <p>
-                <strong>Tarifa:</strong> ${v.tarifa_estim.toFixed(2)}
-              </p>
+              <p><strong>ID:</strong> {v.viajeId}</p>
+              <p><strong>Origen:</strong> {v.origen}</p>
+              <p><strong>Destino:</strong> {v.destino}</p>
+              <p><strong>Tarifa:</strong> ${v.tarifa_estim.toFixed(2)}</p>
               <div className="flex space-x-2 mt-2">
                 <button
                   onClick={() => aceptarViaje(v)}

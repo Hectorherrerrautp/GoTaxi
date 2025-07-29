@@ -1,4 +1,3 @@
-// app/register/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -15,7 +14,7 @@ Amplify.configure(awsconfig);
 // Tipado para los atributos personalizados de registro
 interface SignUpAttributes {
   email: string;
-  'custom:role': 'user' | 'driver';
+  'custom:role': 'user';
 }
 
 // Tipado para los parámetros de signUp
@@ -27,10 +26,9 @@ interface SignUpInput {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail]       = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [role, setRole]         = useState<'user'|'driver'>('user');
-  const [error, setError]       = useState<string>('');
+  const [error, setError] = useState<string>('');
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +39,13 @@ export default function RegisterPage() {
       password,
       attributes: {
         email,
-        'custom:role': role,
-      }
+        'custom:role': 'user',
+      },
     };
 
     try {
       await signUp(params);
-      router.push(role === 'driver' ? '/driver/home' : '/user/home');
+      router.push('/confirm?email=' + encodeURIComponent(email));
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -58,16 +56,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
+    <div className="flex justify-center items-center h-screen bg-black">
+      <div className="w-full max-w-md p-6 bg-black rounded-lg shadow-lg">
+        <h2 className="text-2xl font-bold mb-6 text-center text-white">Registro</h2>
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         <form onSubmit={handleRegister} className="space-y-4">
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block mb-1 font-medium">
+            <label htmlFor="email" className="block mb-1 font-medium text-white">
               Correo electrónico
             </label>
             <input
@@ -75,7 +73,7 @@ export default function RegisterPage() {
               type="email"
               required
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="correo@example.com"
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
@@ -83,7 +81,7 @@ export default function RegisterPage() {
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block mb-1 font-medium">
+            <label htmlFor="password" className="block mb-1 font-medium text-white">
               Contraseña
             </label>
             <input
@@ -91,39 +89,10 @@ export default function RegisterPage() {
               type="password"
               required
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
-          </div>
-
-          {/* Role selector */}
-          <div>
-            <span className="block mb-1 font-medium">Registrarme como:</span>
-            <div className="flex space-x-6">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="role"
-                  value="user"
-                  checked={role === 'user'}
-                  onChange={() => setRole('user')}
-                  className="mr-2"
-                />
-                Pasajero
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="role"
-                  value="driver"
-                  checked={role === 'driver'}
-                  onChange={() => setRole('driver')}
-                  className="mr-2"
-                />
-                Conductor
-              </label>
-            </div>
           </div>
 
           {/* Submit */}
