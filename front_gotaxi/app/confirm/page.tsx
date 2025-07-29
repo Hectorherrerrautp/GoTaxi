@@ -1,19 +1,19 @@
-// app/confirm/page.tsx
-import { Suspense } from 'react';
-import ConfirmForm from './ConfirmForm';
+// app/confirm/page.tsx  (Server Component, async)
+import ConfirmForm from './ConfirmForm'; // cliente
 
-type Props = {
-  searchParams?: Record<string, string | string[] | undefined>;
-};
+// No necesitamos Suspense: el page ya es async y no hay CSR-bailout
+export default async function ConfirmPage({
+  searchParams,
+}: {
+  /* igualamos el tipo real de Next */
+  searchParams?: Promise<Record<string, unknown>>;
+}) {
+  // Next nos pasa un Promise; lo resolvemos
+  const params = searchParams ? await searchParams : {};
 
-export default function ConfirmPage({ searchParams }: Props) {
-  // ── Normalizamos: si viene como array, tomamos el primer elemento
-  const raw      = searchParams?.email;
-  const email    = Array.isArray(raw) ? raw[0] ?? '' : raw ?? '';
+  // Extraemos y normalizamos `email`
+  const raw   = params?.email as string | string[] | undefined;
+  const email = Array.isArray(raw) ? raw[0] ?? '' : raw ?? '';
 
-  return (
-    <Suspense fallback={<div className="text-white p-6">Cargando…</div>}>
-      <ConfirmForm email={email} />
-    </Suspense>
-  );
+  return <ConfirmForm email={email} />;
 }
