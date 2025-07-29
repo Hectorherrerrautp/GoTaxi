@@ -1,95 +1,97 @@
+// app/reports/page.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-type Viaje = {
+interface Viaje {
   viajeId: string;
   origen: string;
   destino: string;
-  estado: string;
-  tarifa_estim?: number;
-  distancia_km?: number;
-  userId?: string;
-};
+  costo: number;          // ① cambia la interfaz
+}
 
-export default function Reportes() {
-  const [reportes, setReportes] = useState<{
-    totalViajes: number;
-    viajesEnEspera: number;
-    viajesCompletados: number;
-    historial: Viaje[];
-  } | null>(null);
-
-  const [error, setError] = useState('');
+export default function ReportesPage() {
+  const [totalDinero, setTotalDinero] = useState<number | null>(null);
+  const [countTotal, setCountTotal]   = useState<number | null>(null);
+  const [historial,  setHistorial]    = useState<Viaje[]>([]);
+  const [loading,    setLoading]      = useState(true);
+  const [error,      setError]        = useState('');
 
   useEffect(() => {
-    const fetchReportes = async () => {
-      try {
-        const res = await fetch('https://012ghhm2ee.execute-api.us-east-1.amazonaws.com/dev/reportes');
-        if (!res.ok) throw new Error('Error al obtener los reportes');
-        const data = await res.json();
-        setReportes(data);
-      } catch (err) {
-        if (err instanceof Error) {
-          console.error(err.message);
-          setError('No se pudieron cargar los reportes: ' + err.message);
-        } else {
-          console.error('Error desconocido');
-          setError('Error desconocido');
-        }
-      }
-    };
+    const api = process.env.NEXT_PUBLIC_API_URL;
+    if (!api) { setError('NEXT_PUBLIC_API_URL no definida'); setLoading(false); return; }
 
-    fetchReportes();
+    (async () => {
+      try {
+        const [dineroRes, totalRes, histRes] = await Promise.all([
+          fetch(`${api}/reportes/today`),     // totalDinero
+          fetch(`${api}/reportes/total`),     // countTotal
+          fetch(`${api}/reportes/historial`)  // historial con costo
+        ]);
+        if (!dineroRes.ok || !totalRes.ok || !histRes.ok)
+          throw new Error('Error al cargar los reportes');
+
+        const { totalDinero } = await dineroRes.json();
+        const { countTotal }  = await totalRes.json();
+        const hist            = await histRes.json() as Viaje[];
+
+        setTotalDinero(totalDinero);
+        setCountTotal(countTotal);
+        setHistorial(hist);
+      } catch (e) {
+        setError((e as Error).message);
+      } finally { setLoading(false); }
+    })();
   }, []);
 
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!reportes) return <p className="text-gray-700">Cargando reportes...</p>;
+  if (loading) return <div className="p-8 text-center">Cargando reportes…</div>;
+  if (error)   return <div className="p-8 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-center mb-6 text-yellow-600">Reportes de Viajes</h1>
+    <div className="p-8 space-y-8">
+      <h1 className="text-2xl font-semibold">Reportes de Viajes</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white shadow rounded-lg p-4 text-center">
-          <h2 className="text-lg font-semibold text-gray-700">Total de Viajes</h2>
-          <p className="text-2xl text-blue-600 font-bold">{reportes.totalViajes}</p>
+      {/* Métricas */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 bg-black shadow rounded">
+          <p className="text-yellow-500">Dinero total gastado</p>
+          <p className="text-3xl font-bold">
+            {totalDinero?.toLocaleString('es-PA', { style: 'currency', currency: 'USD' }) ?? '—'}
+          </p>
         </div>
-        <div className="bg-white shadow rounded-lg p-4 text-center">
-          <h2 className="text-lg font-semibold text-gray-700">En Espera</h2>
-          <p className="text-2xl text-yellow-600 font-bold">{reportes.viajesEnEspera}</p>
-        </div>
-        <div className="bg-white shadow rounded-lg p-4 text-center">
-          <h2 className="text-lg font-semibold text-gray-700">Completados</h2>
-          <p className="text-2xl text-green-600 font-bold">{reportes.viajesCompletados}</p>
+        <div className="p-4 bg-black shadow rounded">
+          <p className="text-yellow-500">Total de viajes</p>
+          <p className="text-3xl font-bold">{countTotal ?? '—'}</p>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow rounded-lg overflow-hidden">
-          <thead className="bg-yellow-500 text-white">
-            <tr>
-              <th className="px-4 py-2 text-left">Viaje ID</th>
-              <th className="px-4 py-2 text-left">Origen</th>
-              <th className="px-4 py-2 text-left">Destino</th>
-              <th className="px-4 py-2 text-left">Estado</th>
-              <th className="px-4 py-2 text-left">Tarifa</th>
-              <th className="px-4 py-2 text-left">Distancia (km)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reportes.historial.map((viaje) => (
-              <tr key={viaje.viajeId} className="border-b hover:bg-gray-50">
-                <td className="px-4 py-2">{viaje.viajeId}</td>
-                <td className="px-4 py-2">{viaje.origen}</td>
-                <td className="px-4 py-2">{viaje.destino}</td>
-                <td className="px-4 py-2">{viaje.estado}</td>
-                <td className="px-4 py-2">${viaje.tarifa_estim?.toFixed(2) || '-'}</td>
-                <td className="px-4 py-2">{viaje.distancia_km?.toFixed(2) || '-'}</td>
+      {/* Historial */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Historial de Viajes</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-black rounded shadow text-yellow-500">
+            <thead>
+              <tr className="bg-black">
+                <th className="px-4 py-2 text-left text-sm font-medium">ID</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Origen</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Destino</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">Costo (USD)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {historial.map((v) => (
+                <tr key={v.viajeId} className="border-t hover:bg-gray-800">
+                  <td className="px-4 py-2 text-sm">{v.viajeId}</td>
+                  <td className="px-4 py-2 text-sm">{v.origen}</td>
+                  <td className="px-4 py-2 text-sm">{v.destino}</td>
+                  <td className="px-4 py-2 text-sm">
+                    {v.costo.toLocaleString('es-PA', { style: 'currency', currency: 'USD' })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

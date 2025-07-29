@@ -7,6 +7,27 @@
       "permissions": {
         "setting": "open"
       }
+    },
+    "/reportes/today": {
+      "name": "/reportes/today",
+      "lambdaFunction": "reportesHandler",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/reportes/total": {
+      "name": "/reportes/total",
+      "lambdaFunction": "reportesHandler",
+      "permissions": {
+        "setting": "open"
+      }
+    },
+    "/reportes/historial": {
+      "name": "/reportes/historial",
+      "lambdaFunction": "reportesHandler",
+      "permissions": {
+        "setting": "open"
+      }
     }
   }
 }

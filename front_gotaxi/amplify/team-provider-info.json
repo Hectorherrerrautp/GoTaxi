@@ -17,6 +17,11 @@
           "deploymentBucketName": "amplify-frontgotaxi-dev-e3ab8-deployment",
           "s3Key": "amplify-builds/SolicitarViaje-4f32447866436b556466-build.zip",
           "viajesTableName": "viajesDB-dev"
+        },
+        "reportesHandler": {
+          "viajesTableName": "viajesDB-dev",
+          "deploymentBucketName": "amplify-frontgotaxi-dev-e3ab8-deployment",
+          "s3Key": "amplify-builds/reportesHandler-75537a58514478524949-build.zip"
         }
       },
       "api": {

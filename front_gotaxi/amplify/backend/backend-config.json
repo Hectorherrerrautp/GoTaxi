@@ -9,6 +9,14 @@
           ],
           "category": "function",
           "resourceName": "SolicitarViaje"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "reportesHandler"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -59,6 +67,22 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    },
+    "reportesHandler": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn",
+            "StreamArn"
+          ],
+          "category": "storage",
+          "resourceName": "viajesDB"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "parameters": {
@@ -83,6 +107,30 @@
         {
           "category": "function",
           "resourceName": "SolicitarViaje"
+        }
+      ]
+    },
+    "AMPLIFY_function_reportesHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "reportesHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_reportesHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "reportesHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_reportesHandler_viajesTableName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "reportesHandler"
         }
       ]
     }

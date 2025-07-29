@@ -1,14 +1,11 @@
-// app/user/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Map from '../../components/Map';
 
-// Haversine
-function haversineDistance(
-  a: [number, number],
-  b: [number, number]
-): number {
+// ——————————————————————————————————————————
+// Util: distancia Haversine
+function haversineDistance(a: [number, number], b: [number, number]): number {
   const toRad = (x: number) => (x * Math.PI) / 180;
   const [lon1, lat1] = a;
   const [lon2, lat2] = b;
@@ -22,14 +19,20 @@ function haversineDistance(
       Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
+// ——————————————————————————————————————————
 
-const API_BASE = 'https://012ghhm2ee.execute-api.us-east-1.amazonaws.com/dev';
+const API_BASE =
+  'https://012ghhm2ee.execute-api.us-east-1.amazonaws.com/dev';
 
 export default function HomePage() {
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
-  const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<[number, number] | null>(null);
+  const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(
+    null,
+  );
+  const [dropoffCoords, setDropoffCoords] = useState<[number, number] | null>(
+    null,
+  );
   const [fare, setFare] = useState<number | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [viajeId, setViajeId] = useState<string | null>(null);
@@ -37,7 +40,8 @@ export default function HomePage() {
   const baseFare = 2.5;
   const ratePerKm = 1.2;
 
-  // Recalcular tarifa
+  // ─────────────────────────────────────────
+  // Recalcular tarifa cuando cambian coords
   useEffect(() => {
     if (pickupCoords && dropoffCoords) {
       const d = haversineDistance(pickupCoords, dropoffCoords);
@@ -49,26 +53,22 @@ export default function HomePage() {
     }
   }, [pickupCoords, dropoffCoords]);
 
-  // Polling de estado
+  // ─────────────────────────────────────────
+  // Polling de estado hasta que termine
   useEffect(() => {
     if (!viajeId) return;
 
-    // usar window.setInterval para que devuelva number
     const iv = window.setInterval(async () => {
       try {
         const res = await fetch(
-          `${API_BASE}/solicitar-viaje?viajeId=${viajeId}`
+          `${API_BASE}/solicitar-viaje?viajeId=${viajeId}`,
         );
-        if (!res.ok) {
-          console.error('Status polling error:', res.status);
-          return;
-        }
-        const json = await res.json();
-        const nuevoEstado = json.item.estado;
-        setStatus(nuevoEstado);
+        if (!res.ok) return console.error('Polling error', res.status);
 
-        // Si ya no está en "en_espera", limpiamos el intervalo
-        if (nuevoEstado !== 'en_espera') {
+        const { item } = await res.json();
+        setStatus(item.estado);
+
+        if (item.estado === 'finalizado' || item.estado === 'rechazado') {
           window.clearInterval(iv);
         }
       } catch (err) {
@@ -76,24 +76,24 @@ export default function HomePage() {
       }
     }, 5000);
 
-    // llamada inicial
+    // llamada inmediata
     (async () => {
       try {
         const res = await fetch(
-          `${API_BASE}/solicitar-viaje?viajeId=${viajeId}`
+          `${API_BASE}/solicitar-viaje?viajeId=${viajeId}`,
         );
         if (res.ok) {
-          const json = await res.json();
-          setStatus(json.item.estado);
+          const { item } = await res.json();
+          setStatus(item.estado);
         }
       } catch {}
     })();
 
-    return () => {
-      window.clearInterval(iv);
-    };
+    return () => window.clearInterval(iv);
   }, [viajeId]);
 
+  // ─────────────────────────────────────────
+  // Solicitar viaje
   const solicitarViaje = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pickupCoords || !dropoffCoords) {
@@ -128,21 +128,36 @@ export default function HomePage() {
     }
   };
 
+  // ─────────────────────────────────────────
+  // UI
   return (
     <div className="flex flex-col h-screen">
-       <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 bg-black shadow-md">
         <div className="flex items-center">
           <img src="/logogotaxi.png" alt="GoTaxi Logo" className="w-8 h-8" />
           <span className="ml-2 text-2xl font-bold text-yellow-500">GoTaxi</span>
         </div>
         <nav>
-          <a href="/reports" className="text-white hover:text-gray-300 font-medium">Reportes</a>
+          <a
+            href="/reports"
+            className="text-white hover:text-gray-300 font-medium"
+          >
+            Reportes
+          </a>
         </nav>
         <div className="w-8 h-8 rounded-full overflow-hidden">
-          <img src="/userloo.png" alt="Perfil" className="w-full h-full object-cover" />
+          <img
+            src="/userloo.png"
+            alt="Perfil"
+            className="w-full h-full object-cover"
+          />
         </div>
       </header>
+
+      {/* Main */}
       <main className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
         <aside className="w-full max-w-sm bg-black m-6 p-4 rounded-lg shadow-lg">
           <h2 className="text-white text-xl font-semibold mb-4">Get a ride</h2>
           <form onSubmit={solicitarViaje} className="space-y-4">
@@ -164,18 +179,23 @@ export default function HomePage() {
                 className="w-full"
               />
             </div>
+
             {fare != null && (
               <p>
-                Dist: {haversineDistance(pickupCoords!, dropoffCoords!).toFixed(2)} km — Costo: ${fare.toFixed(2)}
+                Dist:{' '}
+                {haversineDistance(pickupCoords!, dropoffCoords!).toFixed(2)} km
+                — Costo: ${fare.toFixed(2)}
               </p>
             )}
+
             <button
               type="submit"
-              className="text-black w-full bg-yellow-500  py-2 rounded-lg"
+              className="text-black w-full bg-yellow-500 py-2 rounded-lg"
             >
               Pedir Viaje
             </button>
           </form>
+
           {status && (
             <div className="mt-4 p-3 bg-white text-black rounded">
               <strong>Estado:</strong> {status}
@@ -183,6 +203,7 @@ export default function HomePage() {
           )}
         </aside>
 
+        {/* Mapa */}
         <div className="flex-1 m-6 rounded-lg overflow-hidden">
           <Map
             onSetPickup={(addr, coords) => {
